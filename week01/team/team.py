@@ -24,7 +24,7 @@ from cse251 import *
 prime_count = 0
 numbers_processed = 0
 
-def is_prime(n):
+def is_prime(n) -> bool:
     global numbers_processed
     numbers_processed += 1
 
@@ -42,6 +42,13 @@ def is_prime(n):
         i += 6
     return True
 
+def check_prime(start, range_count):
+    # check for prime numbers in the range
+    global prime_count
+    for i in range(start, start + range_count):
+        if is_prime(i):
+            prime_count += 1
+            print(i, end=', ', flush=True)
 
 if __name__ == '__main__':
     log = Log(show_terminal=True)
@@ -52,12 +59,26 @@ if __name__ == '__main__':
     # TODO 3) change the program to divide the for loop into 10 threads
 
     start = 10000000000
-    range_count = 100000
-    for i in range(start, start + range_count):
-        if is_prime(i):
-            prime_count += 1
-            print(i, end=', ', flush=True)
-    print(flush=True)
+    range_count = 1000007
+    THREADS = 10
+    step_range = range_count/THREADS
+    thread_list = []
+
+    for i in range(THREADS):
+        step_start= start + (i * step_range)
+        print(int(step_start))
+        t=threading.Thread(target=check_prime, args=(int(step_start), int(step_range)))
+        thread_list.append(t)
+
+    # Start the threads
+    for t in thread_list:
+        print(f'Starting thread {t.name}')
+        t.start()
+
+    # Wait for the threads to finish
+    for t in thread_list:
+        print(f'Waiting for thread {t.name}')
+        t.join()
 
     # Should find 4306 primes
     log.write(f'Numbers processed = {numbers_processed}')

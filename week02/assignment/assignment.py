@@ -47,30 +47,105 @@ import threading
 from cse251 import *
 
 # Const Values
-TOP_API_URL = 'http://127.0.0.1:8790'
+TOP_API_URL = 'http://127.0.0.1:8790/'
 
 # Global Variables
 call_count = 0
 
 
 # TODO Add your threaded class definition here
+class Threaded_Call(threading.Thread):
+    def __init__(self, url):
+        threading.Thread.__init__(self)
+        self.url = url
 
+    def run(self):
+        global call_count
+        response = requests.get(self.url)
+        call_count += 1
+        if response.status_code == 200:
+          self.response = response.json()
+        else:
+          print(f'Error: {response.status_code} - {self.url}')
+          self.response = None
 
 # TODO Add any functions you need here
 
 
 def main():
-    log = Log(show_terminal=True)
-    log.start_timer('Starting to retrieve data from the server')
+  log = Log(show_terminal=True)
+  log.start_timer('Starting to retrieve data from the server')
 
-    # TODO Retrieve Top API urls
 
-    # TODO Retireve Details on film 6
+  # TODO Retrieve Top API urls
+  top = Threaded_Call(TOP_API_URL)
+  top.start()
+  top.join()
 
-    # TODO Display results
+  # TODO Retireve Details on film 6
+  film6 = Threaded_Call(top.response['films'] + '6')
+  film6.start()
+  film6.join()
 
-    log.stop_timer('Total Time To complete')
-    log.write(f'There were {call_count} calls to the server')
+  catagories = ['characters', 'planets', 'starships', 'vehicles', 'species']
+  threads={'characters':[], 'planets':[], 'starships':[], 'vehicles':[], 'species':[]}
+  for catagory in catagories:
+    for url in film6.response[catagory]:
+      t = Threaded_Call(url)
+      threads[catagory].append(t)
+
+  for catagory in threads:
+    for t in threads[catagory]:
+      t.start()
+  
+  for catagory in threads:
+    for t in threads[catagory]:
+      t.join()
+
+  # for t in threads:
+  #   print(t.response)
+
+  print(threads['characters'][0].response['name'])
+
+  # TODO Display results
+  log.write('-----------------------------------------')
+  log.write('Title   : ' + film6.response['title'])
+  log.write('Director: ' + film6.response['director'])
+  log.write('Producer: ' + film6.response['producer'])
+  log.write('Releasd : ' + film6.response['release_date'] + '\n')
+  
+  log.write('Characters: ' + str(len(film6.response['characters'])))
+  characters=''
+  for character in threads['characters']:
+    characters += character.response['name']+', '
+  log.write(characters + '\n')
+  
+  log.write('Planets: ' + str(len(film6.response['planets'])))
+  planets=''
+  for planet in threads['planets']:
+    planets += planet.response['name']+', '
+  log.write(planets + '\n')
+  
+  log.write('Starships: ' + str(len(film6.response['starships'])))
+  starships=''
+  for starship in threads['starships']:
+    starships += starship.response['name']+', '
+  log.write(starships + '\n')
+
+  log.write('Vehicles: ' + str(len(film6.response['vehicles'])))
+  vehicles=''
+  for vehicle in threads['vehicles']:
+    vehicles += vehicle.response['name']+', '
+  log.write(vehicles + '\n')
+  
+  log.write('Species: ' + str(len(film6.response['species'])))
+  specieses=''
+  for species in threads['species']:
+    specieses += species.response['name']+', '
+  log.write(specieses + '\n')
+
+  log.stop_timer('Total Time To complete')
+  log.write(f'There were {call_count} calls to the server')
     
 
 if __name__ == "__main__":
