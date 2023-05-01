@@ -101,11 +101,22 @@ def main():
   for catagory in threads:
     for t in threads[catagory]:
       t.join()
+  
+  names={'characters':[], 'planets':[], 'starships':[], 'vehicles':[], 'species':[]}
 
+  for catagory in threads:
+    for t in threads[catagory]:
+      names[catagory].append(t.response['name'])
+
+  print(threads['characters'])
+
+  for catagory in names:
+    names[catagory].sort()
+  
   # for t in threads:
   #   print(t.response)
 
-  print(threads['characters'][0].response['name'])
+  # print(threads['characters'][0].response['name'])
 
   # TODO Display results
   log.write('-----------------------------------------')
@@ -116,32 +127,32 @@ def main():
   
   log.write('Characters: ' + str(len(film6.response['characters'])))
   characters=''
-  for character in threads['characters']:
-    characters += character.response['name']+', '
+  for character in names['characters']:
+    characters += character+', '
   log.write(characters + '\n')
   
   log.write('Planets: ' + str(len(film6.response['planets'])))
   planets=''
-  for planet in threads['planets']:
-    planets += planet.response['name']+', '
+  for planet in names['planets']:
+    planets += planet+', '
   log.write(planets + '\n')
   
   log.write('Starships: ' + str(len(film6.response['starships'])))
   starships=''
-  for starship in threads['starships']:
-    starships += starship.response['name']+', '
+  for starship in names['starships']:
+    starships += starship+', '
   log.write(starships + '\n')
 
   log.write('Vehicles: ' + str(len(film6.response['vehicles'])))
   vehicles=''
-  for vehicle in threads['vehicles']:
-    vehicles += vehicle.response['name']+', '
+  for vehicle in names['vehicles']:
+    vehicles += vehicle+', '
   log.write(vehicles + '\n')
   
   log.write('Species: ' + str(len(film6.response['species'])))
   specieses=''
-  for species in threads['species']:
-    specieses += species.response['name']+', '
+  for species in names['species']:
+    specieses += species+', '
   log.write(specieses + '\n')
 
   log.stop_timer('Total Time To complete')
