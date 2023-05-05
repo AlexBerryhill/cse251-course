@@ -3,7 +3,7 @@
 Course: CSE 251
 Lesson Week: 03
 File: assignment.py
-Author: <Your Name>
+Author: Alex Berryhill
 
 Purpose: Video Frame Processing
 
@@ -31,7 +31,7 @@ CPU_COUNT = mp.cpu_count() + 4
 
 # TODO Your final video need to have 300 processed frames.  However, while you are 
 # testing your code, set this much lower
-FRAME_COUNT = 20
+FRAME_COUNT = 300
 
 RED   = 0
 GREEN = 1
@@ -80,21 +80,23 @@ if __name__ == '__main__':
 
     elephant = [f'elephant/image{i:03d}.png' for i in range(1, FRAME_COUNT+1)]
     green = [f'green/image{i:03d}.png' for i in range(1, FRAME_COUNT+1)]
-    formted = [f'processed/image{i:03d}.png' for i in range(1, FRAME_COUNT+1)]
+    processed = [f'processed/image{i:03d}.png' for i in range(1, FRAME_COUNT+1)]
+
+    filenames = [*zip(elephant, green, processed)]
 
     with mp.Pool(processes=CPU_COUNT) as p:
       for cpu in range(1, CPU_COUNT+1):
-        for i in range(1, FRAME_COUNT+1):
-          elephant[i-1] = f'elephant/image{i:03d}.png'
-          green[i-1] = f'green/image{i:03d}.png'
-          formted[i-1] = f'processed/image{i:03d}.png'
-        xaxis_cpus.append(cpu)
         start_time = timeit.default_timer()
-        p.map(create_new_frame, 
-                
-              )
+        p.starmap(create_new_frame, iterable=filenames)
         yaxis_times.append(timeit.default_timer() - start_time)
         print(f'CPU: {cpu} Time: {timeit.default_timer() - start_time}')
+        # for i in range(1, FRAME_COUNT+1):
+        #   elephant[i-1] = f'elephant/image{i:03d}.png'
+        #   green[i-1] = f'green/image{i:03d}.png'
+        #   formted[i-1] = f'processed/image{i:03d}.png'
+        # xaxis_cpus.append(cpu)
+        
+        
 
     # sample code: remove before submitting  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # process one frame #10
@@ -113,6 +115,7 @@ if __name__ == '__main__':
     log.write(f'Total Time for ALL processing: {timeit.default_timer() - all_process_time}')
 
     try:
+      xaxis_cpus = [i for i in range(1, CPU_COUNT+1)]
       # create plot of results and also save it to a PNG file
       plt.plot(xaxis_cpus, yaxis_times, label=f'{FRAME_COUNT}')
       

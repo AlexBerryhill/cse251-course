@@ -141,6 +141,8 @@ class Board():
                 return False
         return True
 
+    
+
     def find_word(self, word):
         """ Find a word in the board """
         print(f'Finding {word}...')
@@ -151,9 +153,24 @@ class Board():
                         return True
         return False
 
+board = Board(25)
+
+# class Threaded_Search(threading.Thread):
+#     def __init__(self, word):
+#         threading.Thread.__init__(self)
+#         self.word = word
+#         self.found = False
+#         self.lock = threading.Lock()
+    
+#     def run(self):
+#         global board
+#         if not board.find_word(self.word):
+#             print(f'Error: Could not find "{self.word}"')
+#             self.found = False
+#         self.found = True
 
 def main():
-    board = Board(25)
+    global board
     board.place_words(words)
 
     print('Board with placed words')
@@ -162,9 +179,24 @@ def main():
     board.display()
 
     start = time.perf_counter()
-    for word in words:
-        if not board.find_word(word):
-            print(f'Error: Could not find "{word}"')
+    
+    CPU_COUNT = mp.cpu_count() + 4      
+    
+    # with mp.Pool(CPU_COUNT) as p:
+    #     p.map(board.find_word, words)
+    # for word in words:
+        # if not board.find_word(word):
+        #     print(f'Error: Could not find "{word}"')
+    #     thread = Threaded_Search(word)
+    #     threads.append(thread)
+    #     thread.start()
+        
+    # for thread in threads:
+    #     thread.join()
+
+    # for thread in threads:
+    #     if not thread.found:
+    #         print(f'Error: Could not find "{thread.word}"')
     
     total_time = time.perf_counter() - start
 
