@@ -89,15 +89,8 @@ if __name__ == '__main__':
         start_time = timeit.default_timer()
         p.starmap(create_new_frame, iterable=filenames)
         yaxis_times.append(timeit.default_timer() - start_time)
-        print(f'CPU: {cpu} Time: {timeit.default_timer() - start_time}')
-        # for i in range(1, FRAME_COUNT+1):
-        #   elephant[i-1] = f'elephant/image{i:03d}.png'
-        #   green[i-1] = f'green/image{i:03d}.png'
-        #   formted[i-1] = f'processed/image{i:03d}.png'
-        # xaxis_cpus.append(cpu)
-        
-        
-
+        log.write(f'\n\nCPU: {cpu} Time: {timeit.default_timer() - start_time}\n')
+   
     # sample code: remove before submitting  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # process one frame #10
     # image_number = 10

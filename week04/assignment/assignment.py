@@ -2,7 +2,7 @@
 Course: CSE 251
 Lesson Week: 04
 File: assignment.py
-Author: <Your name>
+Author: Alex Berryhill
 
 Purpose: Assignment 04 - Factory and Dealership
 
