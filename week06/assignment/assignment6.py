@@ -99,6 +99,7 @@ class Marble_Creator(mp.Process):
             time.sleep(self.creator_delay)
         print('Marble_Creator: No more marbles')
         self.out_pipe.send(None)
+        self.out_pipe.close()
 
 class Bagger(mp.Process):
     """ Receives marbles from the marble creator, then there are enough
@@ -119,7 +120,6 @@ class Bagger(mp.Process):
         tell the assembler that there are no more bags
         '''
         while True:
-            time.sleep(self.bagger_delay)
             bag = Bag()
             for i in range(self.number_of_marbles_in_a_bag):
                 marble = self.input_pipe.recv()
@@ -130,8 +130,12 @@ class Bagger(mp.Process):
             if bag.get_size() < self.number_of_marbles_in_a_bag:
                 print('Bagger: No more bags')
                 self.out_pipe.send(None)
+                self.out_pipe.close()
+                self.input_pipe.close()
                 break
             self.out_pipe.send(bag)
+            time.sleep(self.bagger_delay)
+
             
 
 
@@ -158,6 +162,8 @@ class Assembler(mp.Process):
             bag = self.input_pipe.recv()
             if bag == None:
                 self.out_pipe.send(None)
+                self.out_pipe.close()
+                self.input_pipe.close()
                 print('Assembler: No more bags')
                 break
             gift = Gift(random.choice(self.marble_names), bag)
@@ -187,6 +193,7 @@ class Wrapper(mp.Process):
                 # print('Wrapper: ', gift)
                 if gift == None:
                     print('Wrapper: No more gifts')
+                    self.input_pipe.close()
                     break
                 boxes_file.write(f'{gift} {time.time()}\n')
                 self.count.value += 1
@@ -225,12 +232,12 @@ def main():
     log.write(f'Assembler delay  = {settings[ASSEMBLER_DELAY]}')
     log.write(f'Wrapper delay    = {settings[WRAPPER_DELAY]}')
 
-    # TODO: create Pipes between creator -> bagger -> assembler -> wrapper
+    # Pipes between creator -> bagger -> assembler -> wrapper
     creator_parent, creator_child = mp.Pipe()
     bagger_parent, bagger_child = mp.Pipe()
     assembler_parent, assembler_child = mp.Pipe()
 
-    # TODO create variable to be used to count the number of gifts
+    # create variable to be used to count the number of gifts
     count = mp.Value('i', 0)
 
     # delete final boxes file
@@ -239,7 +246,7 @@ def main():
 
     log.write('Create the processes')
 
-    # TODO Create the processes (ie., classes above)
+    # Create the processes (ie., classes above)
     creator_process = Marble_Creator(creator_parent, settings[MARBLE_COUNT], settings[CREATOR_DELAY])
     bagger_process = Bagger(creator_child, bagger_parent, settings[NUMBER_OF_MARBLES_IN_A_BAG], settings[BAGGER_DELAY])
     assembler_process = Assembler(bagger_child, assembler_parent, settings[ASSEMBLER_DELAY])
@@ -259,7 +266,7 @@ def main():
 
     display_final_boxes(BOXES_FILENAME, log)
     
-    # TODO Log the number of gifts created.
+    # Log the number of gifts created.
     log.write(f'Number of gifts created: {count.value}')
 
 
