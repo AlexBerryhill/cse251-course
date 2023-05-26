@@ -22,7 +22,7 @@ import filecmp
 # Include cse 251 common Python files
 from cse251 import *
 
-def sender():
+def sender(input_pipe, items_sent):
     """ function to send messages to other end of pipe """
     '''
     open the file
@@ -30,18 +30,31 @@ def sender():
     Note: you must break each line in the file into words and
           send those words through the pipe
     '''
-    pass
+    with open('bom.txt', 'r') as file:
+        for line in file:
+            for i, word in enumerate(line.split()):
+                input_pipe.send(word)
+                if i != len(line.split()) - 1:
+                    input_pipe.send(' ')
+
+            input_pipe.send('\n')
+    input_pipe.send('end')
 
 
-def receiver():
+def receiver(output_pipe, items_sent):
     """ function to print the messages received from other end of pipe """
     ''' 
     open the file for writing
     receive all content through the shared pipe and write to the file
     Keep track of the number of items sent over the pipe
     '''
-    pass
-
+    with open('bom-copy.txt', 'w') as file:
+        while True:
+            word = output_pipe.recv()
+            if word == 'end':
+                break
+            file.write(word)
+            items_sent.value += 1
 
 def are_files_same(filename1, filename2):
     """ Return True if two files are the same """
@@ -50,22 +63,30 @@ def are_files_same(filename1, filename2):
 
 def copy_file(log, filename1, filename2):
     # TODO create a pipe 
+    input_pipe, output_pipe = mp.Pipe()
     
     # TODO create variable to count items sent over the pipe
+    items_sent = Value('i', 0)
 
-    # TODO create processes 
+    # TODO create processes
+    sender_process = Process(target = sender, args = (input_pipe, items_sent))
+    receiver_process = Process(target = receiver, args = (output_pipe, items_sent))
 
     log.start_timer()
     start_time = log.get_time()
 
-    # TODO start processes 
+    # start processes
+    sender_process.start()
+    receiver_process.start()
     
     # TODO wait for processes to finish
+    sender_process.join()
+    receiver_process.join()
 
     stop_time = log.get_time()
 
-    log.stop_timer(f'Total time to transfer content = {PUT YOUR VARIABLE HERE}: ')
-    log.write(f'items / second = {PUT YOUR VARIABLE HERE / (stop_time - start_time)}')
+    log.stop_timer(f'Total time to transfer content = {items_sent.value}: ')
+    log.write(f'items / second = {items_sent.value / (stop_time - start_time)}')
 
     if are_files_same(filename1, filename2):
         log.write(f'{filename1} - Files are the same')
