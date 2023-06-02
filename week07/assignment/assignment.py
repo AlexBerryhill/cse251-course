@@ -2,7 +2,7 @@
 Course: CSE 251
 Lesson Week: 07
 File: assingnment.py
-Author: <Your name here>
+Author: Alex Berryhill
 Purpose: Process Task Files
 
 Instructions:  See I-Learn
@@ -62,7 +62,7 @@ def task_prime(value):
             - or -
         {value} is not prime
     """
-    pass
+    result_primes.append(is_prime(value))
 
 def task_word(word):
     """
@@ -72,21 +72,26 @@ def task_word(word):
             - or -
         {word} not found *****
     """
-    pass
+    with open('words.txt', 'r') as f:
+        for line in f:
+            if line.strip() == word:
+                result_words.append(f'{word} Found')
+                return
+        result_words.append(f'***** {word} not found *****')
 
-def task_upper(text):
+def task_upper(text) -> str:
     """
     Add the following to the global list:
         {text} ==>  uppercase version of {text}
     """
-    pass
+    result_upper.append(text.upper())
 
 def task_sum(start_value, end_value):
     """
     Add the following to the global list:
         sum of {start_value:,} to {end_value:,} = {total:,}
     """
-    pass
+    result_sums.append(sum(range(start_value, end_value + 1)))
 
 def task_name(url):
     """
@@ -96,7 +101,12 @@ def task_name(url):
             - or -
         {url} had an error receiving the information
     """
-    pass
+    response = requests.get(url)
+    if response.status_code == 200:
+        result_names.append(f'{url} has name {response.text}')
+    else:
+        result_names.append(f'{url} had an error receiving the information')
+
 
 
 def main():
@@ -104,12 +114,15 @@ def main():
     log.start_timer()
 
     # TODO Create process pools
+    pool = mp.Pool(mp.cpu_count())
 
     # TODO you can change the following
     # TODO start and wait pools
+    threads = []
     
     count = 0
     task_files = glob.glob("*.task")
+    print(f'Number of task files: {len(task_files)}')
     for filename in task_files:
         # print()
         # print(filename)
@@ -118,19 +131,26 @@ def main():
         count += 1
         task_type = task['task']
         if task_type == TYPE_PRIME:
-            task_prime(task['value'])
+            threads.append(pool.apply_async(task_prime, args=(task['value'],)))
+            # task_prime(task['value'])
         elif task_type == TYPE_WORD:
-            task_word(task['word'])
+            threads.append(pool.apply_async(task_word, args=(task['word'],)))
+            # task_word(task['word'])
         elif task_type == TYPE_UPPER:
-            task_upper(task['text'])
+            threads.append(pool.apply_async(task_upper, args=(task['text'],)))
+            # task_upper(task['text'])
         elif task_type == TYPE_SUM:
-            task_sum(task['start'], task['end'])
+            threads.append(pool.apply_async(task_sum, args=(task['start'], task['end'],)))
+            # task_sum(task['start'], task['end'])
         elif task_type == TYPE_NAME:
-            task_name(task['url'])
+            threads.append(pool.apply_async(task_name, args=(task['url'],)))
+            # task_name(task['url'])
         else:
             log.write(f'Error: unknown task type {task_type}')
 
-
+    #wait for all processes to complete
+    for thread in threads:
+        thread.get()
 
     # Do not change the following code (to the end of the main function)
     def log_list(lst, log):

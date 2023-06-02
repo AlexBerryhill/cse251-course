@@ -8,11 +8,11 @@ Instructions
 
 Top level url returns the following
 {
-   "people": "http://127.0.0.1:8790/people/", 
-   "planets": "http://127.0.0.1:8790/planets/", 
-   "films": "http://127.0.0.1:8790/films/",
-   "species": "http://127.0.0.1:8790/species/", 
-   "vehicles": "http://127.0.0.1:8790/vehicles/", 
+   "people"   : "http://127.0.0.1:8790/people/", 
+   "planets"  : "http://127.0.0.1:8790/planets/", 
+   "films"    : "http://127.0.0.1:8790/films/",
+   "species"  : "http://127.0.0.1:8790/species/", 
+   "vehicles" : "http://127.0.0.1:8790/vehicles/", 
    "starships": "http://127.0.0.1:8790/starships/"
 }
 
