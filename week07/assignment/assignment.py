@@ -62,7 +62,7 @@ def task_prime(value):
             - or -
         {value} is not prime
     """
-    result_primes.append(is_prime(value))
+    return (is_prime(value))
 
 def task_word(word):
     """
@@ -75,23 +75,22 @@ def task_word(word):
     with open('words.txt', 'r') as f:
         for line in f:
             if line.strip() == word:
-                result_words.append(f'{word} Found')
-                return
-        result_words.append(f'***** {word} not found *****')
+                return (f'{word} Found')
+        return (f'***** {word} not found *****')
 
 def task_upper(text) -> str:
     """
     Add the following to the global list:
         {text} ==>  uppercase version of {text}
     """
-    result_upper.append(text.upper())
+    return (text.upper())
 
 def task_sum(start_value, end_value):
     """
     Add the following to the global list:
         sum of {start_value:,} to {end_value:,} = {total:,}
     """
-    result_sums.append(sum(range(start_value, end_value + 1)))
+    return (sum(range(start_value, end_value + 1)))
 
 def task_name(url):
     """
@@ -103,11 +102,25 @@ def task_name(url):
     """
     response = requests.get(url)
     if response.status_code == 200:
-        result_names.append(f'{url} has name {response.text}')
+        return (f'{url} has name {response.json()["name"]}')
     else:
-        result_names.append(f'{url} had an error receiving the information')
+        return (f'{url} had an error receiving the information')
 
+# Callback function for the pool
+def prime_callback(result):
+    result_primes.append(result)
 
+def word_callback(result):
+    result_words.append(result)
+
+def upper_callback(result):
+    result_upper.append(result)
+
+def sum_callback(result):
+    result_sums.append(result)
+
+def name_callback(result):
+    result_names.append(result)
 
 def main():
     log = Log(show_terminal=True)
@@ -131,26 +144,26 @@ def main():
         count += 1
         task_type = task['task']
         if task_type == TYPE_PRIME:
-            threads.append(pool.apply_async(task_prime, args=(task['value'],)))
+            threads.append(pool.apply_async(task_prime, args=(task['value'],), callback=prime_callback))
             # task_prime(task['value'])
         elif task_type == TYPE_WORD:
-            threads.append(pool.apply_async(task_word, args=(task['word'],)))
+            threads.append(pool.apply_async(task_word, args=(task['word'],), callback=word_callback))
             # task_word(task['word'])
         elif task_type == TYPE_UPPER:
-            threads.append(pool.apply_async(task_upper, args=(task['text'],)))
+            threads.append(pool.apply_async(task_upper, args=(task['text'],), callback=upper_callback))
             # task_upper(task['text'])
         elif task_type == TYPE_SUM:
-            threads.append(pool.apply_async(task_sum, args=(task['start'], task['end'],)))
+            threads.append(pool.apply_async(task_sum, args=(task['start'], task['end'],), callback=sum_callback))
             # task_sum(task['start'], task['end'])
         elif task_type == TYPE_NAME:
-            threads.append(pool.apply_async(task_name, args=(task['url'],)))
+            threads.append(pool.apply_async(task_name, args=(task['url'],), callback=name_callback))
             # task_name(task['url'])
         else:
             log.write(f'Error: unknown task type {task_type}')
 
-    #wait for all processes to complete
-    for thread in threads:
-        thread.get()
+    # #wait for all processes to complete
+    pool.close()
+    pool.join()
 
     # Do not change the following code (to the end of the main function)
     def log_list(lst, log):
