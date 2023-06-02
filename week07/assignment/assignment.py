@@ -127,7 +127,9 @@ def main():
     log.start_timer()
 
     # TODO Create process pools
-    pool = mp.Pool(mp.cpu_count())
+    POOLS = mp.cpu_count()
+    print(f'Number of pools: {POOLS}')
+    pool = mp.Pool(POOLS)
 
     # TODO you can change the following
     # TODO start and wait pools
@@ -140,7 +142,7 @@ def main():
         # print()
         # print(filename)
         task = load_json_file(filename)
-        print(task)
+        # print(task)
         count += 1
         task_type = task['task']
         if task_type == TYPE_PRIME:
