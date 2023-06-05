@@ -127,7 +127,7 @@ def main():
     log.start_timer()
 
     # TODO Create process pools
-    POOLS = 5
+    POOLS = mp.cpu_count()
     print(f'Number of pools: {POOLS}')
     pool = mp.Pool(POOLS)
 
