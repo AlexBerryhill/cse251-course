@@ -90,7 +90,7 @@ def task_sum(start_value, end_value):
     Add the following to the global list:
         sum of {start_value:,} to {end_value:,} = {total:,}
     """
-    return (sum(range(start_value, end_value + 1)))
+    return f'{sum(range(start_value, end_value + 1)):,}'
 
 def task_name(url):
     """
