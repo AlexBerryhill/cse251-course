@@ -2,7 +2,7 @@
 Course: CSE 251 
 Lesson Week: 09
 File: assignment09-p1.py 
-Author: <Add name here>
+Author: Alex Berryhill
 
 Purpose: Part 1 of assignment 09, finding a path to the end position in a maze
 
@@ -29,13 +29,30 @@ speed = SLOW_SPEED
 # TODO add any functions
 
 def solve_path(maze):
-    """ Solve the maze and return the path found between the start and end positions.  
+        """ Solve the maze and return the path found between the start and end positions.
         The path is a list of positions, (x, y) """
-        
-    # TODO start add code here
-    path = []
-    return path
+        path = []
+        return _solve_path(maze, path=path)
 
+
+def _solve_path(maze, row=0, col=0, path=None) -> list:
+    # Base case: If the maze is already at the end position, return the current path
+    if maze.at_end(row, col):
+        print(f'Found end at {row}, {col}')
+        return path
+
+    for moves in maze.get_possible_moves(row, col):
+        if maze.can_move_here(moves[0], moves[1]):
+            maze.move(moves[0], moves[1], COLOR)
+            # Recursively call solve_path for each possible move
+            result = _solve_path(maze, moves[0], moves[1], path + [(moves[0], moves[1])])
+            if result:
+                # If a valid path is found, return it
+                return result
+
+    # If no valid path is found, return an empty list
+    maze.restore(row, col)
+    return []
 
 def get_path(log, filename):
     """ Do not change this function """

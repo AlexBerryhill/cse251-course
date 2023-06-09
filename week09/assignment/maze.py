@@ -101,7 +101,7 @@ class Maze():
         return self._state(row, col) == OPEN
 
 
-    def get_possible_moves(self, row, col):
+    def get_possible_moves(self, row, col) -> list:
         """ Given a square location, returns possible moves """
         if not self._pos_ok(row, col):
             return []

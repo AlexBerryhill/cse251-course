@@ -2,7 +2,7 @@
 Course: CSE 251 
 Lesson Week: 09
 File: assignment09-p2.py 
-Author: <Add name here>
+Author: Alex Berryhill
 
 Purpose: Part 2 of assignment 09, finding the end position in the maze
 
@@ -64,6 +64,20 @@ thread_count = 0
 stop = False
 speed = SLOW_SPEED
 
+class Thread(threading.Thread):
+    def __init__(self, target, args):
+        threading.Thread.__init__(self)
+        self.target = target
+        self.args = args
+        self.result = None
+    
+    def run(self):
+        self.target(*self.args)
+    
+    def join(self):
+        threading.Thread.join(self)
+        return self.result
+
 def get_color():
     """ Returns a different color when called """
     global current_color_index
@@ -79,9 +93,32 @@ def solve_find_end(maze):
     global stop
     stop = False
 
+    _solve_path(maze,path=[])
 
-    pass
+def _solve_path(maze, row=0, col=0, path=None, color=(0, 0, 255)) -> list:
+    # Base case: If the maze is already at the end position, return the current path
+    if maze.at_end(row, col):
+        print(f'Found end at {row}, {col}')
+        return path
+    possible_moves = maze.get_possible_moves(row, col)
 
+    for moves in possible_moves:
+        if maze.can_move_here(moves[0], moves[1]):
+            if len(possible_moves)>1 and possible_moves[0]!=moves:
+                color = get_color()
+            maze.move(moves[0], moves[1], color)
+            thread_1 = Thread(target=_solve_path, args=(maze, moves[0], moves[1], path + [(moves[0], moves[1])], color))
+            thread_1.start()
+            # Recursively call solve_path for each possible move
+    result = thread_1.join()
+    print(result)
+    if result:
+        # If a valid path is found, return it
+        return result
+
+    # If no valid path is found, return an empty list
+    maze.restore(row, col)
+    return []
 
 def find_end(log, filename, delay):
     """ Do not change this function """
