@@ -57,6 +57,24 @@ COLORS = (
 )
 SLOW_SPEED = 100
 FAST_SPEED = 0
+COLORS_DICT = {
+    (0,0,255): 'red',
+    (0,255,0): 'green',
+    (255,0,0): 'blue',
+    (255,255,0): 'yellow',
+    (0,255,255): 'cyan',
+    (255,0,255): 'magenta',
+    (128,0,0): 'maroon',
+    (128,128,0): 'olive',
+    (0,128,0): 'dark green',
+    (128,0,128): 'purple',
+    (0,128,128): 'teal',
+    (0,0,128): 'navy',
+    (72,61,139): 'dark slate blue',
+    (143,143,188): 'light slate blue',
+    (226,138,43): 'cadet blue',
+    (128,114,250): 'aquamarine'
+}
 
 # Globals
 current_color_index = 0
@@ -64,19 +82,48 @@ thread_count = 0
 stop = False
 speed = SLOW_SPEED
 
-class Thread(threading.Thread):
-    def __init__(self, target, args):
-        threading.Thread.__init__(self)
-        self.target = target
-        self.args = args
-        self.result = None
+# class ThreadWithResult(threading.Thread):
+#     def __init__(self, target, args):
+#         threading.Thread.__init__(self)
+#         self.target = target
+#         self.args = args
+#         self.result = None
     
-    def run(self):
-        self.target(*self.args)
+#     def run(self):
+#         print(f'Starting thread {COLORS_DICT[self.args[4]]}')
+#         self.target(*self.args)
     
-    def join(self):
-        threading.Thread.join(self)
-        return self.result
+#     def join(self):
+#         threading.Thread.join(self)
+#         return self.result
+
+def run(self):
+    try:
+        if self._target is not None:
+            self._result=self._target(*self._args, **self._kwargs)
+    finally:
+        # Avoid a refcycle if the thread is running a function with
+        # an argument that has a member that points to the thread.
+        del self._target, self._args, self._kwargs
+
+def join(self, timeout=None):
+    if not self._initialized:
+            raise RuntimeError("Thread.__init__() not called")
+    if not self._started.is_set():
+        raise RuntimeError("cannot join thread before it is started")
+    # if self is current_thread():
+    #     raise RuntimeError("cannot join current thread")
+
+    if timeout is None:
+        self._wait_for_tstate_lock()
+    else:
+        # the behavior of a negative timeout isn't documented, but
+        # historically .join(timeout=x) for x<0 has acted as if timeout=0
+        self._wait_for_tstate_lock(timeout=max(timeout, 0))
+    return self._result
+
+threading.Thread.run = run
+threading.Thread.join = join
 
 def get_color():
     """ Returns a different color when called """
@@ -93,32 +140,87 @@ def solve_find_end(maze):
     global stop
     stop = False
 
-    _solve_path(maze,path=[])
+    path = _find_end(maze, path=[], color=get_color())
+    
+    # Store the path variable for later use
+    maze.path = path
 
-def _solve_path(maze, row=0, col=0, path=None, color=(0, 0, 255)) -> list:
+def _find_end(maze, row=0, col=0, path=None, color=(0, 0, 255)) -> list:
+    global stop, thread_count  # Refer to the global stop and thread_count variables
+    
     # Base case: If the maze is already at the end position, return the current path
     if maze.at_end(row, col):
         print(f'Found end at {row}, {col}')
+        stop = True  # Set the stop flag to True when the end position is found
         return path
+    elif(stop):
+        maze.restore(row, col)
+        return []
+
     possible_moves = maze.get_possible_moves(row, col)
 
-    for moves in possible_moves:
+    threads=[]
+    result = None
+    for i, moves in enumerate(possible_moves):
         if maze.can_move_here(moves[0], moves[1]):
-            if len(possible_moves)>1 and possible_moves[0]!=moves:
-                color = get_color()
-            maze.move(moves[0], moves[1], color)
-            thread_1 = Thread(target=_solve_path, args=(maze, moves[0], moves[1], path + [(moves[0], moves[1])], color))
-            thread_1.start()
-            # Recursively call solve_path for each possible move
-    result = thread_1.join()
-    print(result)
-    if result:
-        # If a valid path is found, return it
-        return result
+            if len(possible_moves) > 1 and i != len(possible_moves) - 1:
+                new_color = get_color()
+                maze.move(moves[0], moves[1], new_color)
+                thread = threading.Thread(target=_find_end, args=(maze, moves[0], moves[1], path + [(moves[0], moves[1])], new_color))
+                thread.start()
+                thread_count += 1
+                threads.append(thread)
+            else:
+                maze.move(moves[0], moves[1], color)
+                # Recursively call solve_path for each possible move
+                result = _find_end(maze, moves[0], moves[1], path + [(moves[0], moves[1])], color)
+                if result:
+                    # If a valid path is found, return it
+                    # print(result, COLORS_DICT[color])
+                    return result
+
+    for thread in threads:
+        result = thread.join()
+        if result:
+            return result
 
     # If no valid path is found, return an empty list
-    maze.restore(row, col)
+    if not result:
+        maze.restore(row, col)
     return []
+
+# def _solve_path(maze, row=0, col=0, path=None, color=(0, 0, 255)) -> list:
+#     global stop, thread_count  # Refer to the global stop and thread_count variables
+#     if maze.at_end(row, col):
+#         stop = True  # Set the stop flag to True when the end position is found
+#         return path
+
+#     possible_moves = maze.get_possible_moves(row, col)
+#     thread_1 = None  # Initialize the thread_1 variable
+
+#     for moves in possible_moves:
+#         if stop:  # Check the stop flag
+#             return
+
+#         if maze.can_move_here(moves[0], moves[1]):
+#             if len(possible_moves) > 1 and possible_moves[0][0] != moves[0] and possible_moves[0][1] != moves[1]:
+#                 color = get_color()
+#             maze.move(moves[0], moves[1], color)
+#             thread_1 = ThreadWithResult(target=_solve_path, args=(maze, moves[0], moves[1], path + [(moves[0], moves[1])], color))
+#             thread_count += 1  # Increment the thread_count variable by 1
+#             thread_1.start()
+
+#     if thread_1:
+#         result = thread_1.join()
+
+#         if result:
+#             return result
+
+#     # maze.restore(row, col)
+#     return []
+
+
+
 
 def find_end(log, filename, delay):
     """ Do not change this function """

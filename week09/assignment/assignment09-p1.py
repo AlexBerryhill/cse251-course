@@ -36,7 +36,7 @@ def solve_path(maze):
 
 
 def _solve_path(maze, row=0, col=0, path=None) -> list:
-    # Base case: If the maze is already at the end position, return the current path
+    # Base case
     if maze.at_end(row, col):
         print(f'Found end at {row}, {col}')
         return path

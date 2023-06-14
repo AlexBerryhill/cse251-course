@@ -52,15 +52,64 @@ Instructions:
 
 import time
 import threading
+import random as rand
 
 PHILOSOPHERS = 5
 MAX_MEALS_EATEN = PHILOSOPHERS * 5
 
+class Philosopher(threading.Thread):
+    def __init__(self, name, forks):
+        threading.Thread.__init__(self)
+        self.name:int = int(name) # philosopher number
+        self.forks = forks # list of locks
+        self.meals_eaten = 0
+
+    def run(self):
+        for i in range(MAX_MEALS_EATEN):
+            # self.print_status('is thinking')
+            self.think()
+            # self.print_status('is hungry')
+            self.get_forks()
+            self.eat()
+            self.print_status('finished eating')
+            self.meals_eaten += 1
+            self.put_forks()
+            # self.print_status('is thinking')
+            self.think()
+
+    def eat(self):
+        time.sleep(rand.randint(1, 3))
+    
+    def think(self):
+        time.sleep(rand.randint(1, 3))
+
+    def get_forks(self):
+        self.forks[int(self.name)].acquire()
+        self.forks[(int(self.name) + 1) % PHILOSOPHERS].acquire()
+
+    def put_forks(self):
+        self.forks[int(self.name)].release()
+        self.forks[(int(self.name) + 1) % PHILOSOPHERS].release()
+
+    def print_status(self, status):
+        print(f'{self.name} {status} {self.meals_eaten} meals')
+
 def main():
-    # TODO - create the forks
-    # TODO - create PHILOSOPHERS philosophers
-    # TODO - Start them eating and thinking
-    # TODO - Display how many times each philosopher ate
+    # create the forks
+    forks = [threading.Lock() for i in range(PHILOSOPHERS)]
+    # create PHILOSOPHERS philosophers
+    philosophers = [Philosopher(i, forks) for i in range(PHILOSOPHERS)]
+    #Start them eating and thinking
+    for p in philosophers:
+        p.start()
+    
+    # Wait for all the philosophers to finish
+    for p in philosophers:
+        p.join()
+    
+    # Display how many times each philosopher ate
+    for p in philosophers:
+        p.print_status('ate')
 
     pass
 
