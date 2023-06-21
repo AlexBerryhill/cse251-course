@@ -154,7 +154,7 @@ def _find_end(maze, row=0, col=0, path=None, color=(0, 0, 255)) -> list:
         stop = True  # Set the stop flag to True when the end position is found
         return path
     elif(stop):
-        maze.restore(row, col)
+        # maze.restore(row, col)
         return []
 
     possible_moves = maze.get_possible_moves(row, col)
@@ -185,42 +185,9 @@ def _find_end(maze, row=0, col=0, path=None, color=(0, 0, 255)) -> list:
             return result
 
     # If no valid path is found, return an empty list
-    if not result:
-        maze.restore(row, col)
+    # if not result:
+    #     maze.restore(row, col)
     return []
-
-# def _solve_path(maze, row=0, col=0, path=None, color=(0, 0, 255)) -> list:
-#     global stop, thread_count  # Refer to the global stop and thread_count variables
-#     if maze.at_end(row, col):
-#         stop = True  # Set the stop flag to True when the end position is found
-#         return path
-
-#     possible_moves = maze.get_possible_moves(row, col)
-#     thread_1 = None  # Initialize the thread_1 variable
-
-#     for moves in possible_moves:
-#         if stop:  # Check the stop flag
-#             return
-
-#         if maze.can_move_here(moves[0], moves[1]):
-#             if len(possible_moves) > 1 and possible_moves[0][0] != moves[0] and possible_moves[0][1] != moves[1]:
-#                 color = get_color()
-#             maze.move(moves[0], moves[1], color)
-#             thread_1 = ThreadWithResult(target=_solve_path, args=(maze, moves[0], moves[1], path + [(moves[0], moves[1])], color))
-#             thread_count += 1  # Increment the thread_count variable by 1
-#             thread_1.start()
-
-#     if thread_1:
-#         result = thread_1.join()
-
-#         if result:
-#             return result
-
-#     # maze.restore(row, col)
-#     return []
-
-
-
 
 def find_end(log, filename, delay):
     """ Do not change this function """
