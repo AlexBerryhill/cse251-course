@@ -2,7 +2,7 @@
 Course: CSE 251
 Lesson Week: 10
 File: assignment.py
-Author: <your name>
+Author: Alex Berryhill
 
 Purpose: assignment for week 10 - reader writer problem
 
@@ -73,7 +73,7 @@ def main():
     smm = SharedMemoryManager()
     smm.start()
 
-    # TODO - Create a ShareableList to be used between the processes
+    #      - Create a ShareableList to be used between the processes
     #      - The buffer should be size 10 PLUS at least three other
     #        values (ie., [0] * (BUFFER_SIZE + 3)).  The extra values
     #        are used for the head and tail for the circular buffer.
@@ -83,10 +83,15 @@ def main():
     #        You can add another value to the sharedable list to keep
     #        track of the number of values received by the readers.
     #        (ie., [0] * (BUFFER_SIZE + 4))
+    sharable_list = smm.ShareableList([0] * (BUFFER_SIZE + 4))
 
-    # TODO - Create any lock(s) or semaphore(s) that you feel you need
+    # - Create any lock(s) or semaphore(s) that you feel you need
+    lock = mp.Lock()
+    empty_spots = mp.Semaphore(1)
+    filled_spots = mp.Semaphore(0)
 
-    # TODO - create reader and writer processes
+    # - create reader and writer processes
+    
 
     # TODO - Start the processes and wait for them to finish
 
