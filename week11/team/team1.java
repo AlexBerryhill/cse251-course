@@ -29,6 +29,92 @@ Part 3:
 import java.util.Random; 
 import java.lang.Math; 
 
+class My_Thread extends Thread
+{
+  int[] array;
+  int start;
+  int end;
+
+  public My_Thread(int[] array, int start, int end)
+  {
+    this.array = array;
+    this.start = start;
+    this.end = end;
+  }
+
+  public void run()
+  {
+    for (int i = start; i < end; i++) 
+    {
+      if (isPrime(array[i]))
+      {
+        System.out.println(array[i]);
+      }
+    }
+  }
+
+
+
+  static boolean isPrime(int n) 
+  { 
+      // Corner cases 
+      if (n <= 1) return false; 
+      if (n <= 3) return true; 
+    
+      // This is checked so that we can skip  
+      // middle five numbers in below loop 
+      if (n % 2 == 0 || n % 3 == 0) return false; 
+    
+      for (int i = 5; i * i <= n; i = i + 6) 
+        if (n % i == 0 || n % (i + 2) == 0) 
+          return false; 
+    
+      return true; 
+  }
+}
+
+class My_Interface implements Runnable
+{
+  int[] array;
+  int start;
+  int end;
+
+  public My_Interface(int[] array, int start, int end)
+  {
+    this.array = array;
+    this.start = start;
+    this.end = end;
+  }
+
+  public void run()
+  {
+    for (int i = start; i < end; i++) 
+    {
+      if (isPrime(array[i]))
+      {
+        System.out.println(array[i]);
+      }
+    }
+  }
+
+  static boolean isPrime(int n) 
+  { 
+      // Corner cases 
+      if (n <= 1) return false; 
+      if (n <= 3) return true; 
+    
+      // This is checked so that we can skip  
+      // middle five numbers in below loop 
+      if (n % 2 == 0 || n % 3 == 0) return false; 
+    
+      for (int i = 5; i * i <= n; i = i + 6) 
+        if (n % i == 0 || n % (i + 2) == 0) 
+          return false; 
+    
+      return true; 
+  }
+}
+
 class Main {
 
   static boolean isPrime(int n) 
@@ -52,22 +138,30 @@ class Main {
     System.out.println("Hello world!");
 
     // create instance of Random class 
-    Random rand = new Random(); 
+    Random rand = new Random();
 
     int count = 1000;
     int[] array = new int[count];
-    for (int i = 0; i < count; i++) 
-    {
+    for (int i = 0; i < count; i++) {
       array[i] = Math.abs(rand.nextInt());
     }
 
-  // TODO - this is just sample code. you can remove it.
-    for (int i = 0; i < count; i++) 
-    {
-      if (isPrime(array[i]))
-      {
-        System.out.println(array[i]);
-      }
+    My_Thread [] threads = new My_Thread[4];
+    for (int i = 0; i < 4; i++) {
+      threads[i] = new My_Thread(array, i * count / 4, (i + 1) * count / 4);
+      threads[i].start();
     }
+
+    My_Interface [] interfaces = new My_Interface[4];
+    for (int i = 0; i < 4; i++) {
+      interfaces[i] = new My_Interface(array, i * count / 4, (i + 1) * count / 4);
+      interfaces[i].run();
+    }
+
+    // for (int i = 0; i < count; i++) {
+    //   if (isPrime(array[i])) {
+    //     System.out.println(array[i]);
+    //   }
+    // }
   }
 }
