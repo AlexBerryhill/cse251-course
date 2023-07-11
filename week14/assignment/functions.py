@@ -58,28 +58,156 @@ Extra (Optional) 10% Bonus to speed up part 3
 """
 from common import *
 import queue
+import threading
+
+# Caches for storing retrieved data
+person_cache = {}
+family_cache = {}
+
+# Locks for accessing the caches
+person_cache_lock = threading.Lock()
+family_cache_lock = threading.Lock()
+
+# -----------------------------------------------------------------------------
+def retrieve_family(family_id):
+    # Retrieve the family information from the server
+    request = Request_thread(f'{TOP_API_URL}/family/{family_id}')
+    request.start()
+    request.join()
+    family_data = request.get_response()
+    return family_data
+
+# -----------------------------------------------------------------------------
+def retrieve_person(person_id):
+    # Retrieve the person information from the server
+    request = Request_thread(f'{TOP_API_URL}/person/{person_id}')
+    request.start()
+    request.join()
+    person_data = request.get_response()
+    return person_data
+
+# -----------------------------------------------------------------------------
+def process_family(family_data, tree):
+    if family_data is None:
+        return
+    family_id = family_data['id']
+    husband_id = family_data['husband_id']
+    wife_id = family_data['wife_id']
+    children_ids = family_data['children']
+
+    # Check if the family is already processed and exists in the tree
+    if tree.does_family_exist(family_id):
+        return
+
+    next_level = []
+    # Check if the husband is already processed and exists in the tree
+    if husband_id in person_cache:
+        husband_data = person_cache[husband_id]
+    else:
+        husband_data = retrieve_person(husband_id)
+        with person_cache_lock:
+            person_cache[husband_id] = husband_data
+
+    husband = Person(husband_data)
+    next_level.append(husband)
+    tree.add_person(husband)
+
+    # Check if the wife is already processed and exists in the tree
+    if wife_id in person_cache:
+        wife_data = person_cache[wife_id]
+    else:
+        wife_data = retrieve_person(wife_id)
+        with person_cache_lock:
+            person_cache[wife_id] = wife_data
+
+    wife = Person(wife_data)
+    next_level.append(wife)
+    tree.add_person(wife)
+
+    # Check if the children are already processed and exist in the tree
+    for child_id in children_ids:
+        if child_id in person_cache:
+            child_data = person_cache[child_id]
+        else:
+            child_data = retrieve_person(child_id)
+            with person_cache_lock:
+                person_cache[child_id] = child_data
+
+        child = Person(child_data)
+        tree.add_person(child)
+
+    # Create the family object and add it to the tree
+    family = Family(family_data)
+    tree.add_family(family)
+    return next_level
 
 # -----------------------------------------------------------------------------
 def depth_fs_pedigree(family_id, tree):
-    # KEEP this function even if you don't implement it
-    # TODO - implement Depth first retrieval
-    # TODO - Printing out people and families that are retrieved from the server will help debugging
+    # Retrieve the family information from the server
+    family_data = retrieve_family(family_id)
 
-    pass
+    # Process the family information
+    next_level = process_family(family_data, tree)
+    
+    # Perform depth-first retrieval for each child in the family
+    for spouse in next_level:
+        print(spouse)
 
+        parents = spouse.get_parentid()
+        # print(parents)
+        # for parent in parents:
+        depth_fs_pedigree(parents, tree)
 # -----------------------------------------------------------------------------
 def breadth_fs_pedigree(family_id, tree):
-    # KEEP this function even if you don't implement it
-    # TODO - implement breadth first retrieval
-    # TODO - Printing out people and families that are retrieved from the server will help debugging
+    # Create a queue to store the family IDs for breadth-first traversal
+    family_queue = queue.Queue()
 
-    pass
+    # Add the initial family ID to the queue
+    family_queue.put(family_id)
+
+    # Perform breadth-first traversal
+    while not family_queue.empty():
+        # Retrieve the family ID from the queue
+        current_family_id = family_queue.get()
+
+        # Retrieve the family information from the server
+        family_data = retrieve_family(current_family_id)
+
+        # Process the family information
+        process_family(family_data, tree)
+
+        # Add the children IDs to the queue for further traversal
+        for child_id in family_data['children']:
+            family_queue.put(child_id)
 
 # -----------------------------------------------------------------------------
 def breadth_fs_pedigree_limit5(family_id, tree):
-    # KEEP this function even if you don't implement it
-    # TODO - implement breadth first retrieval
-    #      - Limit number of concurrent connections to the FS server to 5
-    # TODO - Printing out people and families that are retrieved from the server will help debugging
+    # Create a semaphore to limit the number of concurrent connections
+    semaphore = threading.Semaphore(5)
 
-    pass
+    # Create a queue to store the family IDs for breadth-first traversal
+    family_queue = queue.Queue()
+
+    # Add the initial family ID to the queue
+    family_queue.put(family_id)
+
+    # Perform breadth-first traversal
+    while not family_queue.empty():
+        # Retrieve the family ID from the queue
+        current_family_id = family_queue.get()
+
+        # Acquire the semaphore before making the request
+        semaphore.acquire()
+
+        # Retrieve the family information from the server
+        family_data = retrieve_family(current_family_id)
+
+        # Process the family information
+        process_family(family_data, tree)
+
+        # Release the semaphore after processing the request
+        semaphore.release()
+
+        # Add the children IDs to the queue for further traversal
+        for child_id in family_data['children']:
+            family_queue.put(child_id)

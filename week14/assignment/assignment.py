@@ -2,7 +2,7 @@
 Course: CSE 251
 Lesson Week: 14
 File: assignment.py
-Author: <your name>
+Author: Alex Berryhill
 Purpose: Assignment 14 - Family Search
 """
 import time

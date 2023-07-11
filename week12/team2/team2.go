@@ -51,12 +51,18 @@ func isPrime(n int) bool {
 	return true
 }
 
-func worker() {
-	// TODO - process numbers on one channel and place prime number on another
+func worker(start int, end int, channel chan int) {
+	for i := start; i < end; i++ {
+		if isPrime(i) {
+			channel <- i
+		}
+	}
 }
 
-func readValues() {
-	// TODO -Display prime numbers from a channel
+func readValues(channel chan int) {
+	for {
+		fmt.Println(<-channel)
+	}
 }
 
 func main() {
@@ -65,11 +71,13 @@ func main() {
 	numberValues := 100
 
 	// Create any channels that you need
+	ch := make(chan int)
 	// Create any other "things" that you need to get the workers to finish(join)
+	// var wg sync.WaitGroup
 
 	// create workers
 	for w := 1; w <= workers; w++ {
-		go worker() // Add any arguments
+		go worker(w, w, ch) // Add any arguments
 	}
 
 	rand.Seed(time.Now().UnixNano())
@@ -77,7 +85,10 @@ func main() {
 		// ch <- rand.Int()
 	}
 
-	go readValues() // Add any arguments
+	// Wait for the workers to finish
+	// wg.Wait()
+
+	go readValues(ch) // Add any arguments
 
 	fmt.Println("All Done!")
 }
