@@ -81,7 +81,5 @@ def main():
             elif part_to_run == 3:
                 run_part(log, start_id, generations, BFS5, breadth_fs_pedigree_limit5)
 
-
 if __name__ == '__main__':
     main()
-
