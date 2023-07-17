@@ -193,109 +193,134 @@ def depth_fs_pedigree(family_id, tree):
         child = Person(child_data)
         tree.add_person(child)        
 
-# -----------------------------------------------------------------------------
 def breadth_fs_pedigree(family_id, tree):
-    # Create a queue to store the family IDs for breadth-first traversal
     family_queue = queue.Queue()
     family_queue.put(family_id)
 
-    # Perform breadth-first traversal
     while not family_queue.empty():
         current_family_id = family_queue.get()
+
+        if current_family_id is None:
+            continue
 
         # Retrieve the family information from the server
-        request = Request_thread(f'{TOP_API_URL}/family/{current_family_id}')
-        request.start()
-        request.join()
-        family_data = request.get_response()
+        family_request = Request_thread(f'{TOP_API_URL}/family/{current_family_id}')
+        family_request.start()
 
-        # Process the family information
-        family = Family(family_data)
-        tree.add_family(family)
+        # Wait for family request to complete
+        family_request.join()
+        family_data = family_request.get_response()
 
-        # Retrieve the husband's information from the server
-        husband_id = family.get_husband()
-        request_husband = Request_thread(f'{TOP_API_URL}/person/{husband_id}')
-        request_husband.start()
-        request_husband.join()
-        husband_data = request_husband.get_response()
+        if family_data is not None:
+            family = Family(family_data)
+            tree.add_family(family)
 
-        # Process the husband's information
-        husband = Person(husband_data)
-        tree.add_person(husband)
+            # Retrieve the husband's information from the server
+            husband_id = family.get_husband()
+            if husband_id and not tree.does_person_exist(husband_id):
+                husband_request = Request_thread(f'{TOP_API_URL}/person/{husband_id}')
+                husband_request.start()
+                husband_request.join()
+                husband_data = husband_request.get_response()
 
-        # Retrieve the wife's information from the server
-        wife_id = family.get_wife()
-        request_wife = Request_thread(f'{TOP_API_URL}/person/{wife_id}')
-        request_wife.start()
-        request_wife.join()
-        wife_data = request_wife.get_response()
+                if husband_data is not None:
+                    husband = Person(husband_data)
+                    tree.add_person(husband)
+                    family_queue.put(husband.get_parentid())
 
-        # Process the wife's information
-        wife = Person(wife_data)
-        tree.add_person(wife)
+            # Retrieve the wife's information from the server
+            wife_id = family.get_wife()
+            if wife_id and not tree.does_person_exist(wife_id):
+                wife_request = Request_thread(f'{TOP_API_URL}/person/{wife_id}')
+                wife_request.start()
+                wife_request.join()
+                wife_data = wife_request.get_response()
 
-        # Add the parent IDs to the queue for further traversal
-        if husband.get_parentid():
-            family_queue.put(husband.get_parentid())
+                if wife_data is not None:
+                    wife = Person(wife_data)
+                    tree.add_person(wife)
+                    family_queue.put(wife.get_parentid())
 
-        if wife.get_parentid():
-            family_queue.put(wife.get_parentid())
+            # Retrieve the children's information from the server
+            children_ids = family_data['children']
+            for child_id in children_ids:
+                if not tree.does_person_exist(child_id):
+                    child_request = Request_thread(f'{TOP_API_URL}/person/{child_id}')
+                    child_request.start()
+                    child_request.join()
+                    child_data = child_request.get_response()
 
-# -----------------------------------------------------------------------------
+                    if child_data is not None:
+                        child = Person(child_data)
+                        tree.add_person(child)
+
 def breadth_fs_pedigree_limit5(family_id, tree):
-    # Create a semaphore to limit the number of concurrent connections
     semaphore = threading.Semaphore(5)
-
-    # Create a queue to store the family IDs for breadth-first traversal
     family_queue = queue.Queue()
     family_queue.put(family_id)
 
-    # Perform breadth-first traversal
     while not family_queue.empty():
         current_family_id = family_queue.get()
-
-        # Acquire the semaphore before making the request
+        if current_family_id is None:
+            continue
+        # Acquire the semaphore to limit the number of concurrent threads
         semaphore.acquire()
 
         # Retrieve the family information from the server
-        request = Request_thread(f'{TOP_API_URL}/family/{current_family_id}')
-        request.start()
-        request.join()
-        family_data = request.get_response()
+        family_request = Request_thread(f'{TOP_API_URL}/family/{current_family_id}')
+        family_request.start()
 
-        # Process the family information
-        family = Family(family_data)
-        tree.add_family(family)
+        # Wait for family request to complete
+        family_request.join()
+        family_data = family_request.get_response()
 
-        # Retrieve the husband's information from the server
-        husband_id = family.get_husband()
-        request_husband = Request_thread(f'{TOP_API_URL}/person/{husband_id}')
-        request_husband.start()
-        request_husband.join()
-        husband_data = request_husband.get_response()
+        if family_data is not None:
+            family = Family(family_data)
+            tree.add_family(family)
 
-        # Process the husband's information
-        husband = Person(husband_data)
-        tree.add_person(husband)
+            # Retrieve the husband's information from the server
+            husband_id = family.get_husband()
+            if husband_id and not tree.does_person_exist(husband_id):
+                husband_request = Request_thread(f'{TOP_API_URL}/person/{husband_id}')
+                husband_request.start()
+                husband_request.join()
+                husband_data = husband_request.get_response()
 
-        # Retrieve the wife's information from the server
-        wife_id = family.get_wife()
-        request_wife = Request_thread(f'{TOP_API_URL}/person/{wife_id}')
-        request_wife.start()
-        request_wife.join()
-        wife_data = request_wife.get_response()
+                if husband_data is not None:
+                    husband = Person(husband_data)
+                    tree.add_person(husband)
+                    family_queue.put(husband.get_parentid())
 
-        # Process the wife's information
-        wife = Person(wife_data)
-        tree.add_person(wife)
+            # Retrieve the wife's information from the server
+            wife_id = family.get_wife()
+            if wife_id and not tree.does_person_exist(wife_id):
+                wife_request = Request_thread(f'{TOP_API_URL}/person/{wife_id}')
+                wife_request.start()
+                wife_request.join()
+                wife_data = wife_request.get_response()
 
-        # Add the parent IDs to the queue for further traversal
-        if husband.get_parentid():
-            family_queue.put(husband.get_parentid())
+                if wife_data is not None:
+                    wife = Person(wife_data)
+                    tree.add_person(wife)
+                    family_queue.put(wife.get_parentid())
 
-        if wife.get_parentid():
-            family_queue.put(wife.get_parentid())
+            # Retrieve the children's information from the server
+            children_ids = family_data['children']
+            child_threads = []
+            for child_id in children_ids:
+                if not tree.does_person_exist(child_id):
+                    child_request = Request_thread(f'{TOP_API_URL}/person/{child_id}')
+                    child_request.start()
+                    child_threads.append(child_request)
 
-        # Release the semaphore after processing the request
-        semaphore.release()
+            # Wait for child requests to complete
+            for child_thread in child_threads:
+                child_thread.join()
+                child_data = child_thread.get_response()
+
+                if child_data is not None:
+                    child = Person(child_data)
+                    tree.add_person(child)
+
+            # Release the semaphore after processing the family
+            semaphore.release()
